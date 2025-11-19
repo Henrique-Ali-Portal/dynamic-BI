@@ -1,0 +1,88 @@
+2025-11-19 09:25:42,335 - INFO - Filtros listados com sucesso.
+2025-11-19 09:25:42,341 - INFO - Fontes de dados listadas: ['vendas', 'vendas2']
+2025-11-19 09:25:42,356 - INFO - Filtros listados com sucesso.
+2025-11-19 09:25:42,360 - INFO - Fontes de dados listadas: ['vendas', 'vendas2']
+2025-11-19 09:25:42,808 - DEBUG - Tentando carregar estado de 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json'
+2025-11-19 09:25:42,820 - INFO - Estado 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json' carregado com sucesso.
+2025-11-19 09:25:43,148 - DEBUG - Tentando salvar estado em 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json'
+2025-11-19 09:25:43,149 - INFO - Estado 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json' salvo com sucesso.
+2025-11-19 09:25:43,155 - DEBUG - Tentando carregar estado de 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json'
+2025-11-19 09:25:43,165 - INFO - Estado 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json' carregado com sucesso.
+2025-11-19 09:25:43,280 - DEBUG - Tentando acessar o arquivo: C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx
+2025-11-19 09:25:43,281 - DEBUG - Arquivo encontrado. Tentando ler com pandas...
+2025-11-19 09:25:43,854 - INFO - Sucesso! Arquivo 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx' lido e processado pelo pandas. 21 registros.
+2025-11-19 09:25:43,869 - DEBUG - Tentando salvar estado em 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json'
+2025-11-19 09:25:43,870 - INFO - Estado 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json' salvo com sucesso.
+2025-11-19 09:25:43,877 - DEBUG - Tentando acessar o arquivo: C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx
+2025-11-19 09:25:43,877 - DEBUG - Arquivo encontrado. Tentando ler com pandas...
+2025-11-19 09:25:43,903 - INFO - Sucesso! Arquivo 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx' lido e processado pelo pandas. 21 registros.
+2025-11-19 09:25:43,914 - DEBUG - Tentando acessar o arquivo: C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx
+2025-11-19 09:25:43,914 - DEBUG - Arquivo encontrado. Tentando ler com pandas...
+2025-11-19 09:25:43,939 - INFO - Sucesso! Arquivo 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx' lido e processado pelo pandas. 21 registros.
+2025-11-19 09:25:44,004 - DEBUG - Tentando acessar o arquivo: C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx
+2025-11-19 09:25:44,004 - DEBUG - Arquivo encontrado. Tentando ler com pandas...
+2025-11-19 09:25:44,029 - INFO - Sucesso! Arquivo 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx' lido e processado pelo pandas. 21 registros.
+2025-11-19 09:25:45,162 - DEBUG - Tentando salvar estado em 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json'
+2025-11-19 09:25:45,163 - INFO - Estado 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json' salvo com sucesso.
+2025-11-19 09:50:17,950 - INFO - Filtros listados com sucesso.
+2025-11-19 09:50:17,956 - INFO - Fontes de dados listadas: ['vendas', 'vendas2']
+2025-11-19 09:50:17,975 - INFO - Filtros listados com sucesso.
+2025-11-19 09:50:17,979 - INFO - Fontes de dados listadas: ['vendas', 'vendas2']
+2025-11-19 09:50:18,003 - DEBUG - Tentando carregar estado de 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json'
+2025-11-19 09:50:18,018 - INFO - Estado 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json' carregado com sucesso.
+2025-11-19 09:50:18,028 - DEBUG - Tentando acessar o arquivo: C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx
+2025-11-19 09:50:18,028 - DEBUG - Arquivo encontrado. Tentando ler com pandas...
+2025-11-19 09:50:18,058 - INFO - Sucesso! Arquivo 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx' lido e processado pelo pandas. 21 registros.
+2025-11-19 09:50:18,135 - DEBUG - Tentando carregar estado de 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json'
+2025-11-19 09:50:18,135 - INFO - Estado 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json' carregado com sucesso.
+2025-11-19 09:50:18,157 - DEBUG - Tentando salvar estado em 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json'
+2025-11-19 09:50:18,158 - INFO - Estado 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json' salvo com sucesso.
+2025-11-19 09:50:18,166 - DEBUG - Tentando acessar o arquivo: C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx
+2025-11-19 09:50:18,166 - DEBUG - Arquivo encontrado. Tentando ler com pandas...
+2025-11-19 09:50:18,192 - INFO - Sucesso! Arquivo 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx' lido e processado pelo pandas. 21 registros.
+2025-11-19 09:50:19,219 - DEBUG - Tentando salvar estado em 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json'
+2025-11-19 09:50:19,219 - INFO - Estado 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json' salvo com sucesso.
+2025-11-19 10:01:15,029 - INFO - Fontes de dados listadas: ['vendas', 'vendas2']
+2025-11-19 10:01:15,037 - INFO - Fontes de dados listadas: ['vendas', 'vendas2']
+2025-11-19 10:01:15,056 - DEBUG - Tentando acessar o arquivo: C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas2.xlsx
+2025-11-19 10:01:15,056 - DEBUG - Arquivo encontrado. Tentando ler com pandas...
+2025-11-19 10:01:15,097 - INFO - Sucesso! Arquivo 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas2.xlsx' lido e processado pelo pandas. 21 registros.
+2025-11-19 10:01:15,107 - DEBUG - Tentando acessar o arquivo: C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx
+2025-11-19 10:01:15,107 - DEBUG - Arquivo encontrado. Tentando ler com pandas...
+2025-11-19 10:01:15,132 - INFO - Sucesso! Arquivo 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx' lido e processado pelo pandas. 21 registros.
+2025-11-19 10:01:16,329 - INFO - Fontes de dados listadas: ['vendas', 'vendas2']
+2025-11-19 10:01:16,330 - INFO - Filtros listados com sucesso.
+2025-11-19 10:01:16,338 - INFO - Fontes de dados listadas: ['vendas', 'vendas2']
+2025-11-19 10:01:16,339 - INFO - Filtros listados com sucesso.
+2025-11-19 10:01:19,398 - INFO - Fontes de dados listadas: ['vendas', 'vendas2']
+2025-11-19 10:01:19,400 - INFO - Filtros listados com sucesso.
+2025-11-19 10:01:19,406 - INFO - Fontes de dados listadas: ['vendas', 'vendas2']
+2025-11-19 10:01:19,430 - INFO - Filtros listados com sucesso.
+2025-11-19 10:01:24,444 - INFO - Fontes de dados listadas: ['vendas', 'vendas2']
+2025-11-19 10:01:24,524 - INFO - Filtros listados com sucesso.
+2025-11-19 10:01:24,529 - INFO - Fontes de dados listadas: ['vendas', 'vendas2']
+2025-11-19 10:01:24,547 - INFO - Filtros listados com sucesso.
+2025-11-19 10:01:27,373 - DEBUG - Tentando acessar o arquivo: C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx
+2025-11-19 10:01:27,373 - DEBUG - Arquivo encontrado. Tentando ler com pandas...
+2025-11-19 10:01:27,398 - INFO - Sucesso! Arquivo 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx' lido e processado pelo pandas. 21 registros.
+2025-11-19 10:01:27,409 - DEBUG - Tentando acessar o arquivo: C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx
+2025-11-19 10:01:27,409 - DEBUG - Arquivo encontrado. Tentando ler com pandas...
+2025-11-19 10:01:27,435 - INFO - Sucesso! Arquivo 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx' lido e processado pelo pandas. 21 registros.
+2025-11-19 10:01:35,293 - INFO - Filtros listados com sucesso.
+2025-11-19 10:01:35,296 - INFO - Fontes de dados listadas: ['vendas', 'vendas2']
+2025-11-19 10:01:35,316 - INFO - Filtros listados com sucesso.
+2025-11-19 10:01:35,323 - INFO - Fontes de dados listadas: ['vendas', 'vendas2']
+2025-11-19 10:01:35,353 - DEBUG - Tentando carregar estado de 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json'
+2025-11-19 10:01:35,359 - INFO - Estado 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json' carregado com sucesso.
+2025-11-19 10:01:35,366 - DEBUG - Tentando acessar o arquivo: C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx
+2025-11-19 10:01:35,366 - DEBUG - Arquivo encontrado. Tentando ler com pandas...
+2025-11-19 10:01:35,400 - INFO - Sucesso! Arquivo 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx' lido e processado pelo pandas. 21 registros.
+2025-11-19 10:01:35,514 - DEBUG - Tentando salvar estado em 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json'
+2025-11-19 10:01:35,515 - INFO - Estado 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json' salvo com sucesso.
+2025-11-19 10:01:35,520 - DEBUG - Tentando carregar estado de 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json'
+2025-11-19 10:01:35,535 - INFO - Estado 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json' carregado com sucesso.
+2025-11-19 10:01:35,539 - DEBUG - Tentando acessar o arquivo: C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx
+2025-11-19 10:01:35,539 - DEBUG - Arquivo encontrado. Tentando ler com pandas...
+2025-11-19 10:01:35,568 - INFO - Sucesso! Arquivo 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\data\vendas.xlsx' lido e processado pelo pandas. 21 registros.
+2025-11-19 10:01:37,163 - DEBUG - Tentando salvar estado em 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json'
+2025-11-19 10:01:37,164 - INFO - Estado 'C:\Users\User\Desktop\Henrique\webProjects\NovoTesteBI\backend\Saves\dashboard.json' salvo com sucesso.
