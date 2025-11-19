@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Modal from 'react-modal';
-import { saveFilter, listFilters, listDataSources, listRelationships, fetchData, fetchJoinedData } from '../services/dataService';
+import { saveFilter, listFilters, listDataSources, listRelationships, fetchData, fetchJoinedData, deleteFilter } from '../services/dataService';
 
 const customStyles = {
   content: {
@@ -30,15 +30,32 @@ function FilterManagementModal({ isOpen, onRequestClose, onFilterSaved }) {
   const [sourceType, setSourceType] = useState('dataSource'); // 'dataSource' or 'relationship'
   const [sourceName, setSourceName] = useState('');
   const [column, setColumn] = useState('');
-  const [filterType, setFilterType] = useState('equals'); // equals, contains, greater_than, less_than
-  const [filterValue, setFilterValue] = useState('');
+  const [filterType, setFilterType] = useState('numeric'); // 'numeric', 'date', 'selection'
+  const [filterConfig, setFilterConfig] = useState({});
   const [availableSources, setAvailableSources] = useState([]);
   const [availableRelationships, setAvailableRelationships] = useState([]);
   const [availableColumns, setAvailableColumns] = useState([]);
+  const [uniqueColumnValues, setUniqueColumnValues] = useState([]); // For selection filter
   const [filters, setFilters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingFilterName, setEditingFilterName] = useState(null);
+
+
+  const resetForm = useCallback(() => {
+    setFilterName('');
+    setSourceType('dataSource');
+    setSourceName('');
+    setColumn('');
+    setFilterType('numeric');
+    setFilterConfig({});
+    setUniqueColumnValues([]);
+    setMessage('');
+    setIsEditing(false);
+    setEditingFilterName(null);
+  }, []);
 
   useEffect(() => {
     async function loadInitialData() {
@@ -64,7 +81,7 @@ function FilterManagementModal({ isOpen, onRequestClose, onFilterSaved }) {
       loadInitialData();
       resetForm();
     }
-  }, [isOpen]);
+  }, [isOpen, resetForm]);
 
   useEffect(() => {
     async function loadColumns() {
@@ -74,12 +91,13 @@ function FilterManagementModal({ isOpen, onRequestClose, onFilterSaved }) {
       }
       try {
         let data = [];
+        // Fetch only a small sample to get column names, not all data
         if (sourceType === 'dataSource') {
           data = await fetchData(sourceName);
         } else {
           data = await fetchJoinedData(sourceName);
         }
-        if (data.length > 0) {
+        if (data && data.length > 0) {
           setAvailableColumns(Object.keys(data[0]));
         } else {
           setAvailableColumns([]);
@@ -92,33 +110,60 @@ function FilterManagementModal({ isOpen, onRequestClose, onFilterSaved }) {
     loadColumns();
   }, [sourceType, sourceName]);
 
-  const resetForm = () => {
-    setFilterName('');
-    setSourceType('dataSource');
-    setSourceName('');
-    setColumn('');
-    setFilterType('equals');
-    setFilterValue('');
-    setMessage('');
-  };
+  // Effect to load unique values for 'selection' filter type
+  useEffect(() => {
+    async function loadUniqueColumnValues() {
+      if (filterType === 'selection' && sourceName && column) {
+        try {
+          let data = [];
+          if (sourceType === 'dataSource') {
+            data = await fetchData(sourceName);
+          } else {
+            data = await fetchJoinedData(sourceName);
+          }
+          if (data && data.length > 0 && data[0].hasOwnProperty(column)) {
+            const values = [...new Set(data.map(item => item[column]))].filter(v => v !== null && v !== undefined).map(String);
+            setUniqueColumnValues(values);
+          } else {
+            setUniqueColumnValues([]);
+          }
+        } catch (err) {
+          console.error(`Erro ao carregar valores únicos para a coluna ${column}:`, err);
+          setUniqueColumnValues([]);
+        }
+      } else {
+        setUniqueColumnValues([]);
+      }
+    }
+    loadUniqueColumnValues();
+  }, [filterType, sourceType, sourceName, column]);
 
   const handleSaveFilter = async (e) => {
     e.preventDefault();
     setMessage('');
     setError(null);
 
-    const newFilter = {
+    // Basic validation
+    if (!filterName || !sourceName || !column) {
+      setError('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    const filterPayload = {
       name: filterName,
       sourceType,
       sourceName,
       column,
       type: filterType,
-      value: filterValue,
+      config: {
+        ...filterConfig,
+        type: filterType,
+      },
     };
 
     try {
-      await saveFilter(newFilter);
-      setMessage('Filtro salvo com sucesso!');
+      await saveFilter(filterPayload);
+      setMessage(isEditing ? 'Filtro atualizado com sucesso!' : 'Filtro salvo com sucesso!');
       onFilterSaved(); // Notify parent to refresh filters
       const updatedFilters = await listFilters();
       setFilters(updatedFilters);
@@ -126,6 +171,35 @@ function FilterManagementModal({ isOpen, onRequestClose, onFilterSaved }) {
     } catch (err) {
       console.error("Erro ao salvar filtro:", err);
       setError(err.message || "Erro ao salvar filtro.");
+    }
+  };
+
+  const handleEditFilter = (filter) => {
+    setFilterName(filter.name);
+    setSourceType(filter.sourceType);
+    setSourceName(filter.sourceName);
+    setColumn(filter.column);
+    setFilterType(filter.type);
+    setFilterConfig(filter.config || {});
+    setIsEditing(true);
+    setEditingFilterName(filter.name);
+    setMessage('');
+    setError(null);
+  };
+
+  const handleDeleteFilter = async (name) => {
+    if (!window.confirm(`Tem certeza que deseja deletar o filtro "${name}"?`)) {
+      return;
+    }
+    try {
+      await deleteFilter(name);
+      setMessage(`Filtro "${name}" deletado com sucesso!`);
+      onFilterSaved();
+      const updatedFilters = await listFilters();
+      setFilters(updatedFilters);
+    } catch (err) {
+      console.error("Erro ao deletar filtro:", err);
+      setError(err.message || "Erro ao deletar filtro.");
     }
   };
 
@@ -142,6 +216,146 @@ function FilterManagementModal({ isOpen, onRequestClose, onFilterSaved }) {
     );
   }
 
+  const renderFilterConfigInputs = () => {
+    switch (filterType) {
+      case 'numeric':
+        return (
+          <>
+            <div className="mb-3">
+              <label className="block text-gray-700 text-sm font-bold mb-2">Operador Numérico:</label>
+              <select
+                value={filterConfig.operator || 'equals'}
+                onChange={(e) => setFilterConfig({ ...filterConfig, operator: e.target.value })}
+                className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              >
+                <option value="equals">Igual a</option>
+                <option value="greater_than">Maior que</option>
+                <option value="less_than">Menor que</option>
+                <option value="between">Entre</option>
+              </select>
+            </div>
+            {filterConfig.operator === 'between' ? (
+              <div className="flex gap-2 mb-4">
+                <div className="w-1/2">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">Valor Mínimo:</label>
+                  <input
+                    type="number"
+                    value={filterConfig.min_value || ''}
+                    onChange={(e) => setFilterConfig({ ...filterConfig, min_value: parseFloat(e.target.value) })}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    step="any"
+                  />
+                </div>
+                <div className="w-1/2">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">Valor Máximo:</label>
+                  <input
+                    type="number"
+                    value={filterConfig.max_value || ''}
+                    onChange={(e) => setFilterConfig({ ...filterConfig, max_value: parseFloat(e.target.value) })}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    step="any"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">Valor:</label>
+                <input
+                  type="number"
+                  value={filterConfig.value || ''}
+                  onChange={(e) => setFilterConfig({ ...filterConfig, value: parseFloat(e.target.value) })}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  step="any"
+                />
+              </div>
+            )}
+          </>
+        );
+      case 'date':
+        return (
+          <>
+            <div className="mb-3">
+              <label className="block text-gray-700 text-sm font-bold mb-2">Operador de Data:</label>
+              <select
+                value={filterConfig.operator || 'equals'}
+                onChange={(e) => setFilterConfig({ ...filterConfig, operator: e.target.value })}
+                className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              >
+                <option value="equals">Igual a</option>
+                <option value="before">Antes de</option>
+                <option value="after">Depois de</option>
+                <option value="between">Entre</option>
+              </select>
+            </div>
+            {filterConfig.operator === 'between' ? (
+              <div className="flex gap-2 mb-4">
+                <div className="w-1/2">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">Data Inicial:</label>
+                  <input
+                    type="date"
+                    value={filterConfig.start_date || ''}
+                    onChange={(e) => setFilterConfig({ ...filterConfig, start_date: e.target.value })}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
+                </div>
+                <div className="w-1/2">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">Data Final:</label>
+                  <input
+                    type="date"
+                    value={filterConfig.end_date || ''}
+                    onChange={(e) => setFilterConfig({ ...filterConfig, end_date: e.target.value })}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">Data:</label>
+                <input
+                  type="date"
+                  value={filterConfig.value || ''}
+                  onChange={(e) => setFilterConfig({ ...filterConfig, value: e.target.value })}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
+            )}
+          </>
+        );
+      case 'selection':
+        return (
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">Valores Selecionados:</label>
+            <div className="border rounded p-2 max-h-40 overflow-y-auto">
+              {uniqueColumnValues.length === 0 ? (
+                <p className="text-gray-500">Nenhum valor único encontrado para a coluna selecionada.</p>
+              ) : (
+                uniqueColumnValues.map((val) => (
+                  <div key={val} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`selection-${val}`}
+                      value={val}
+                      checked={(filterConfig.selected_options || []).includes(val)}
+                      onChange={(e) => {
+                        const newSelectedOptions = e.target.checked
+                          ? [...(filterConfig.selected_options || []), val]
+                          : (filterConfig.selected_options || []).filter((option) => option !== val);
+                        setFilterConfig({ ...filterConfig, selected_options: newSelectedOptions });
+                      }}
+                      className="mr-2"
+                    />
+                    <label htmlFor={`selection-${val}`}>{val}</label>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} onRequestClose={handleClose} style={customStyles} contentLabel="Gerenciar Filtros">
       <h2 className="text-2xl font-bold mb-4">Gerenciar Filtros Universais</h2>
@@ -150,7 +364,7 @@ function FilterManagementModal({ isOpen, onRequestClose, onFilterSaved }) {
       {message && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">{message}</div>}
 
       <form onSubmit={handleSaveFilter} className="mb-8 p-4 border rounded-md bg-gray-50">
-        <h3 className="text-xl font-semibold mb-3">Criar Novo Filtro</h3>
+        <h3 className="text-xl font-semibold mb-3">{isEditing ? `Editar Filtro: ${editingFilterName}` : 'Criar Novo Filtro'}</h3>
         <div className="mb-3">
           <label className="block text-gray-700 text-sm font-bold mb-2">Nome do Filtro:</label>
           <input
@@ -159,6 +373,7 @@ function FilterManagementModal({ isOpen, onRequestClose, onFilterSaved }) {
             onChange={(e) => setFilterName(e.target.value)}
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             required
+            disabled={isEditing} // Cannot change name when editing
           />
         </div>
 
@@ -166,8 +381,9 @@ function FilterManagementModal({ isOpen, onRequestClose, onFilterSaved }) {
           <label className="block text-gray-700 text-sm font-bold mb-2">Tipo de Fonte:</label>
           <select
             value={sourceType}
-            onChange={(e) => { setSourceType(e.target.value); setSourceName(''); setColumn(''); }}
+            onChange={(e) => { setSourceType(e.target.value); setSourceName(''); setColumn(''); setFilterConfig({}); }}
             className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            disabled={isEditing}
           >
             <option value="dataSource">Fonte de Dados Direta</option>
             <option value="relationship">Relação de Dados</option>
@@ -178,9 +394,10 @@ function FilterManagementModal({ isOpen, onRequestClose, onFilterSaved }) {
           <label className="block text-gray-700 text-sm font-bold mb-2">Nome da Fonte/Relação:</label>
           <select
             value={sourceName}
-            onChange={(e) => { setSourceName(e.target.value); setColumn(''); }}
+            onChange={(e) => { setSourceName(e.target.value); setColumn(''); setFilterConfig({}); }}
             className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             required
+            disabled={isEditing}
           >
             <option value="">Selecione...</option>
             {sourceType === 'dataSource' && availableSources.map(src => (
@@ -196,10 +413,10 @@ function FilterManagementModal({ isOpen, onRequestClose, onFilterSaved }) {
           <label className="block text-gray-700 text-sm font-bold mb-2">Coluna:</label>
           <select
             value={column}
-            onChange={(e) => setColumn(e.target.value)}
+            onChange={(e) => { setColumn(e.target.value); setFilterConfig({}); }}
             className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
             required
-            disabled={!sourceName || availableColumns.length === 0}
+            disabled={isEditing || !sourceName || availableColumns.length === 0}
           >
             <option value="">Selecione...</option>
             {availableColumns.map(col => (
@@ -212,40 +429,40 @@ function FilterManagementModal({ isOpen, onRequestClose, onFilterSaved }) {
           <label className="block text-gray-700 text-sm font-bold mb-2">Tipo de Filtro:</label>
           <select
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
+            onChange={(e) => { setFilterType(e.target.value); setFilterConfig({}); }}
             className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            disabled={isEditing}
           >
-            <option value="equals">Igual a</option>
-            <option value="contains">Contém</option>
-            <option value="greater_than">Maior que</option>
-            <option value="less_than">Menor que</option>
+            <option value="numeric">Numérico</option>
+            <option value="date">Data</option>
+            <option value="selection">Seleção</option>
           </select>
         </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">Valor do Filtro:</label>
-          <input
-            type="text"
-            value={filterValue}
-            onChange={(e) => setFilterValue(e.target.value)}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            required
-          />
-        </div>
+        {column && renderFilterConfigInputs()}
 
         <div className="flex items-center justify-between">
           <button
             type="submit"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
           >
-            Salvar Filtro
+            {isEditing ? 'Atualizar Filtro' : 'Salvar Filtro'}
           </button>
+          {isEditing && (
+            <button
+              type="button"
+              onClick={resetForm}
+              className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            >
+              Cancelar Edição
+            </button>
+          )}
           <button
             type="button"
             onClick={handleClose}
             className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
           >
-            Cancelar
+            Fechar
           </button>
         </div>
       </form>
@@ -255,12 +472,30 @@ function FilterManagementModal({ isOpen, onRequestClose, onFilterSaved }) {
         <p>Nenhum filtro salvo ainda.</p>
       ) : (
         <ul className="list-disc pl-5">
-          {filters.map((f, index) => (
-            <li key={index} className="mb-2 p-2 border rounded-md bg-white flex justify-between items-center">
+          {filters.map((f) => (
+            <li key={f.name} className="mb-2 p-2 border rounded-md bg-white flex justify-between items-center">
               <div>
-                <span className="font-semibold">{f.name}</span>: {f.column} {f.type} "{f.value}" (Fonte: {f.sourceName} [{f.sourceType}])
+                <span className="font-semibold">{f.name}</span>: ({f.sourceName} - {f.column}) Tipo: {f.type}{' '}
+                {f.config && f.config.operator && `(${f.config.operator})`}
+                {f.config && f.config.value && ` = ${f.config.value}`}
+                {f.config && f.config.min_value && f.config.max_value && ` entre ${f.config.min_value} e ${f.config.max_value}`}
+                {f.config && f.config.start_date && f.config.end_date && ` entre ${f.config.start_date} e ${f.config.end_date}`}
+                {f.config && f.config.selected_options && ` [${f.config.selected_options.join(', ')}]`}
               </div>
-              {/* Adicionar botões de Editar/Excluir aqui futuramente */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEditFilter(f)}
+                  className="bg-green-500 hover:bg-green-700 text-white text-sm py-1 px-2 rounded focus:outline-none focus:shadow-outline"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleDeleteFilter(f.name)}
+                  className="bg-red-500 hover:bg-red-700 text-white text-sm py-1 px-2 rounded focus:outline-none focus:shadow-outline"
+                >
+                  Excluir
+                </button>
+              </div>
             </li>
           ))}
         </ul>

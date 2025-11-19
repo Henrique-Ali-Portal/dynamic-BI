@@ -39,7 +39,7 @@ const UnknownWidget = ({ type }) => (
   </div>
 );
 
-function PrintModal({ isOpen, onRequestClose, widget }) {
+function PrintModal({ isOpen, onRequestClose, widget, activeGlobalFilters }) {
   const [printData, setPrintData] = useState(null);
   const [loadingPrintData, setLoadingPrintData] = useState(true);
   const [printDataError, setPrintDataError] = useState(null);
@@ -58,9 +58,9 @@ function PrintModal({ isOpen, onRequestClose, widget }) {
       try {
         let data = null;
         if (widget.dataSource) {
-          data = await fetchData(widget.dataSource);
+          data = await fetchData(widget.dataSource, activeGlobalFilters);
         } else if (widget.relationshipName) {
-          data = await fetchJoinedData(widget.relationshipName);
+          data = await fetchJoinedData(widget.relationshipName, activeGlobalFilters);
         }
         setPrintData(data);
       } catch (err) {
@@ -71,7 +71,7 @@ function PrintModal({ isOpen, onRequestClose, widget }) {
       }
     }
     loadPrintData();
-  }, [isOpen, widget]); // Re-fetch when modal opens or widget changes
+  }, [isOpen, widget, activeGlobalFilters]); // Re-fetch when modal opens, widget or activeGlobalFilters changes
 
   useEffect(() => {
     if (isOpen && !loadingPrintData && !printDataError && printData) {

@@ -27,7 +27,7 @@ const customStyles = {
 
 Modal.setAppElement('#root');
 
-function AddComponentModal({ isOpen, onRequestClose, onWidgetAdd, availableColumns, availableDataSources, editingWidget }) {
+function AddComponentModal({ isOpen, onRequestClose, onWidgetAdd, availableDataSources, editingWidget }) {
   const [step, setStep] = useState(1);
   const [widgetType, setWidgetType] = useState(null);
   const [selectedDataSource, setSelectedDataSource] = useState('');
@@ -225,8 +225,6 @@ function AddComponentModal({ isOpen, onRequestClose, onWidgetAdd, availableColum
     const formProps = {
       onSubmit: handleFormSubmit,
       onCancel: handleClose,
-      availableColumns: availableColumns, // This prop is now less relevant, forms fetch their own
-      availableDataSources: availableDataSources, // Still useful for context
       selectedDataSource: sourceType === 'dataSource' ? selectedDataSource : null,
       selectedRelationship: sourceType === 'relationship' ? selectedRelationship : null,
       defaultValues: editingWidget ? editingWidget.config : {}, // Pass default values for editing

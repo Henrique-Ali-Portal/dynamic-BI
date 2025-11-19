@@ -5,17 +5,95 @@
             "name": "Nova Aba 1",
             "widgets": [
                 {
-                    "id": "widget-4",
-                    "type": "singleValue",
-                    "dataSource": "vendas",
+                    "id": "widget-0",
+                    "type": "table",
                     "config": {
-                        "title": "Teste",
+                        "columns": [
+                            "PEDIDO",
+                            "EMPRESA",
+                            "VENDEDOR",
+                            "CUSTO",
+                            "TOTAL",
+                            "SUB TOTAL"
+                        ],
+                        "title": "Teste"
+                    },
+                    "dataSource": "vendas",
+                    "layout": {
+                        "w": 4,
+                        "h": 10,
+                        "x": 0,
+                        "y": 0,
+                        "i": "widget-0",
+                        "minW": 2,
+                        "minH": 3,
+                        "moved": false,
+                        "static": false
+                    }
+                },
+                {
+                    "id": "widget-2",
+                    "type": "singleValue",
+                    "config": {
+                        "title": "Teste 2",
                         "column": "VALOR VENDA",
                         "aggregation": "Soma"
                     },
+                    "dataSource": "vendas",
                     "layout": {
-                        "w": 3,
-                        "h": 9,
+                        "w": 4,
+                        "h": 6,
+                        "x": 4,
+                        "y": 0,
+                        "i": "widget-2",
+                        "minW": 2,
+                        "minH": 3,
+                        "moved": false,
+                        "static": false
+                    }
+                }
+            ],
+            "layout": [
+                {
+                    "w": 4,
+                    "h": 10,
+                    "x": 0,
+                    "y": 0,
+                    "i": "widget-0",
+                    "minW": 2,
+                    "minH": 3,
+                    "moved": false,
+                    "static": false
+                },
+                {
+                    "w": 4,
+                    "h": 6,
+                    "x": 4,
+                    "y": 0,
+                    "i": "widget-2",
+                    "minW": 2,
+                    "minH": 3,
+                    "moved": false,
+                    "static": false
+                }
+            ]
+        },
+        {
+            "id": "tab-2",
+            "name": "Nova Aba 2",
+            "widgets": [
+                {
+                    "id": "widget-4",
+                    "type": "singleValue",
+                    "config": {
+                        "title": "Teste132",
+                        "column": "VALOR VENDA",
+                        "aggregation": "Soma"
+                    },
+                    "dataSource": "vendas",
+                    "layout": {
+                        "w": 4,
+                        "h": 6,
                         "x": 0,
                         "y": 0,
                         "i": "widget-4",
@@ -28,8 +106,8 @@
             ],
             "layout": [
                 {
-                    "w": 3,
-                    "h": 9,
+                    "w": 4,
+                    "h": 6,
                     "x": 0,
                     "y": 0,
                     "i": "widget-4",
@@ -41,7 +119,7 @@
             ]
         }
     ],
-    "activeTabId": "tab-1",
-    "nextTabId": 2,
+    "activeTabId": "tab-2",
+    "nextTabId": 3,
     "nextWidgetId": 6
 }

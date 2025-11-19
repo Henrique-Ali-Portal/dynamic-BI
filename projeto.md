@@ -19,7 +19,7 @@ Existem telas/fluxos de configuração:
 
 ## Tecnologias sugeridas
 
-- Framework: **React** 18+ (com **Vite**) usando **TypeScript**.
+- Framework: **React** 18+ (com **Vite**).
 - Styling: **Tailwind CSS**.
 - Layout dinâmico (drag/resize): **react-grid-layout**.
 - Gráficos: **recharts** ou **chart.js**.
@@ -100,8 +100,8 @@ Existem telas/fluxos de configuração:
        - **Numérico:** Permitirá a entrada de um **valor único** para filtragem.
        - **Data:** Permitirá a seleção de um **intervalo de datas**.
        - **Seleção:** As opções serão **preenchidas automaticamente com os valores únicos da coluna conectada**, e permitirá **múltipla seleção**.
-   - **Interação no Dashboard:** Os filtros universais serão apresentados em uma **barra lateral recolhível** à direita, independente da aba do dashboard. A aplicação dos filtros será manual, através de um botão "Atualizar", e não automática.
-   - Quando o usuário clica em "Atualizar", todos os componentes (em todas as abas) que estiverem conectados ao filtro são atualizados.
+   - **Interação no Dashboard:** Os filtros universais serão apresentados em uma **barra lateral recolhível** à direita, independente da aba do dashboard. A aplicação dos filtros será manual, através de um botão "Atualizar".
+   - **Mecanismo de Filtragem (Frontend):** Quando o usuário clica em "Atualizar", os componentes do dashboard **aplicam os filtros diretamente nos dados já carregados no navegador** (filtragem no lado do cliente), proporcionando uma experiência mais ágil e responsiva. O backend não é envolvido para cada aplicação de filtro.
 
 5. **Impressão de Widget**
    - O botão 'Imprimir' no widget agora está disponível tanto no modo de visualização quanto no modo de edição.
@@ -115,7 +115,7 @@ Existem telas/fluxos de configuração:
   - **Metadados das Fontes de Dados:** Um arquivo para armazenar as configurações de cada fonte de dados (endpoint de API). Essas configurações incluirão os tipos de coluna, os nomes "amigáveis" e as conexões com filtros universais. A chave para essas configurações será o identificador do endpoint (ex: "api/vendas").
 - **Comportamento Compartilhado:** As alterações no dashboard ou nas configurações das fontes de dados atualizarão os arquivos na pasta "Saves", refletindo as mudanças para todos os usuários.
 - **Arquitetura de Desenvolvimento:**
-  - **Frontend:** Aplicação React (Vite + TypeScript).
+  - **Frontend:** Aplicação React (Vite). A arquitetura de filtragem foi alterada para ser **client-side**: os dados são carregados uma vez pelo backend e toda a lógica de aplicação de filtros ocorre no navegador para maior responsividade.
   - **Backend (Mock API):** Um servidor **Python com FastAPI** será criado para a fase de desenvolvimento. Sua função é prover uma API de teste com **múltiplos endpoints**, onde cada endpoint lê um arquivo `.xlsx` fixo no diretório do backend e entrega seu conteúdo como JSON, simulando diferentes fontes de dados da API de produção.
 - **Edição de Usuário Único:** Assume-se que apenas um usuário editará o dashboard por vez.
 

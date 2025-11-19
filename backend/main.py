@@ -1,13 +1,64 @@
 import os
 import pandas as pd
-from fastapi import FastAPI, HTTPException, Request, Query # Adicionado Query
+from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import logging
 import numpy as np
 from logging.handlers import RotatingFileHandler
-from typing import Optional # Adicionado Optional
+from typing import Optional, Union, List, Literal
+from pydantic import BaseModel, Field
+from enum import Enum
+
+# --- Pydantic Models for Filters ---
+
+class FilterType(str, Enum):
+    NUMERIC = "numeric"
+    DATE = "date"
+    SELECTION = "selection"
+
+class NumericOperator(str, Enum):
+    EQUALS = "equals"
+    GREATER_THAN = "greater_than"
+    LESS_THAN = "less_than"
+    BETWEEN = "between"
+
+class DateOperator(str, Enum):
+    EQUALS = "equals"
+    BEFORE = "before"
+    AFTER = "after"
+    BETWEEN = "between"
+
+class BaseFilterConfig(BaseModel):
+    pass
+
+class NumericFilterConfig(BaseFilterConfig):
+    type: Literal['numeric'] = 'numeric'
+    operator: NumericOperator = NumericOperator.EQUALS
+    value: Optional[Union[int, float]] = None
+    min_value: Optional[Union[int, float]] = None
+    max_value: Optional[Union[int, float]] = None
+
+class DateFilterConfig(BaseFilterConfig):
+    type: Literal['date'] = 'date'
+    operator: DateOperator = DateOperator.EQUALS
+    value: Optional[str] = None # YYYY-MM-DD
+    start_date: Optional[str] = None # YYYY-MM-DD
+    end_date: Optional[str] = None # YYYY-MM-DD
+
+class SelectionFilterConfig(BaseFilterConfig):
+    type: Literal['selection'] = 'selection'
+    selected_options: List[str] = Field(default_factory=list)
+
+class Filter(BaseModel):
+    name: str
+    source_type: str = Field(alias="sourceType") # 'dataSource' or 'relationship'
+    source_name: str = Field(alias="sourceName")
+    column: str
+    type: FilterType
+    config: Union[NumericFilterConfig, DateFilterConfig, SelectionFilterConfig] = Field(discriminator='type')
+
 
 # --- CONFIGURAÇÃO DE DIRETÓRIOS ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -16,13 +67,22 @@ SAVES_DIR = os.path.join(BASE_DIR, "Saves")
 LOG_FILE_PATH = os.path.join(BASE_DIR, "LogFalha.txt")
 
 # --- CONFIGURAÇÃO DE LOGGING ---
-# Rotação de logs: 1MB por arquivo, mantendo 5 arquivos de backup.
-file_handler = RotatingFileHandler(LOG_FILE_PATH, maxBytes=1_000_000, backupCount=5, encoding='utf-8')
+# Configura o logger para escrever em um arquivo que será sobrescrito a cada inicialização da aplicação
+# e também para imprimir no console.
+file_handler = logging.FileHandler(LOG_FILE_PATH, mode='w', encoding='utf-8')
+file_handler.setLevel(logging.DEBUG) # Define o nível de log para o arquivo
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
 stream_handler = logging.StreamHandler() # Para o console
+stream_handler.setLevel(logging.INFO) # Apenas INFO e acima para o console
+stream_handler.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
+
+# Remove todos os handlers existentes para evitar duplicação em caso de reconfiguração
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
 
 logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.DEBUG, # Nível de log geral
     handlers=[
         file_handler,
         stream_handler
@@ -75,68 +135,6 @@ async def list_data_sources():
             detail=f"Erro ao listar fontes de dados. Verifique o LogFalha.txt."
         )
 
-@app.get("/api/data/{file_name}", tags=["Data Sources"], summary="Obtém dados de um arquivo Excel")
-async def get_data_from_excel(file_name: str, filters: Optional[str] = Query(None)): # Adicionado parâmetro filters
-    """
-    Lê um arquivo .xlsx da pasta 'data' e o retorna como um array de objetos JSON.
-    Aplica filtros opcionais se fornecidos.
-    """
-    file_path = os.path.join(DATA_DIR, f"{file_name}.xlsx")
-    logging.debug(f"Tentando acessar o arquivo: {file_path}")
-
-    if not os.path.exists(file_path):
-        logging.error(f"Arquivo não encontrado: {file_path}")
-        raise HTTPException(
-            status_code=404,
-            detail=f"Fonte de dados '{file_name}.xlsx' não encontrada. Verifique o LogFalha.txt."
-        )
-
-    logging.debug(f"Arquivo encontrado. Tentando ler com pandas...")
-    try:
-        df = pd.read_excel(file_path)
-        
-        # Aplicar filtros se existirem
-        if filters:
-            try:
-                filter_list = json.loads(filters)
-                for f in filter_list:
-                    column = f.get("column")
-                    value = f.get("value")
-                    filter_type = f.get("type")
-
-                    if column and value is not None and filter_type:
-                        if column not in df.columns:
-                            logging.warning(f"Coluna '{column}' para filtro não encontrada no DataFrame.")
-                            continue # Pula este filtro se a coluna não existir
-
-                        if filter_type == "equals":
-                            df = df[df[column] == value]
-                        elif filter_type == "contains":
-                            df = df[df[column].astype(str).str.contains(str(value), case=False, na=False)]
-                        elif filter_type == "greater_than":
-                            df = df[pd.to_numeric(df[column], errors='coerce') > pd.to_numeric(value, errors='coerce')]
-                        elif filter_type == "less_than":
-                            df = df[pd.to_numeric(df[column], errors='coerce') < pd.to_numeric(value, errors='coerce')]
-                        # Adicionar outros tipos de filtro conforme necessário
-            except json.JSONDecodeError:
-                logging.error(f"Filtros fornecidos não são um JSON válido: {filters}")
-                raise HTTPException(status_code=400, detail="Filtros fornecidos não são um JSON válido.")
-            except Exception as filter_e:
-                logging.exception(f"Erro ao aplicar filtros: {filter_e}")
-                raise HTTPException(status_code=500, detail=f"Erro ao aplicar filtros: {filter_e}")
-
-        # Substitui NaN por None para compatibilidade com JSON
-        df = df.replace(np.nan, None)
-        logging.info(f"Sucesso! Arquivo '{file_path}' lido e processado pelo pandas. {len(df)} registros após filtros.")
-        data = df.to_dict(orient="records")
-        return JSONResponse(content=data)
-    except Exception as e:
-        logging.exception(f"Ocorreu um erro ao tentar ler ou filtrar o arquivo '{file_path}' com pandas.")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao ler, processar ou filtrar o arquivo '{file_name}.xlsx'. Verifique o LogFalha.txt para mais detalhes."
-        )
-
 # --- ENDPOINTS PARA PERSISTÊNCIA (SAVES) ---
 
 @app.get("/api/saves/{save_name}", tags=["Persistence"], summary="Carrega um arquivo de configuração")
@@ -186,6 +184,83 @@ async def save_dashboard_state(save_name: str, request: Request):
             status_code=500,
             detail=f"Erro ao salvar o arquivo '{save_name}.json'. Verifique o LogFalha.txt."
         )
+
+
+
+@app.post("/api/filters", tags=["Universal Filters"], summary="Salva um novo filtro universal")
+async def save_filter(new_filter: Filter):
+    """
+    Salva uma nova definição de filtro universal.
+    """
+    filters_data = []
+    if os.path.exists(FILTERS_FILE):
+        try:
+            with open(FILTERS_FILE, "r", encoding="utf-8") as f:
+                filters_data = json.load(f)
+        except json.JSONDecodeError:
+            logging.warning("filters.json está vazio ou corrompido. Iniciando com lista vazia de filtros.")
+            filters_data = []
+    
+    # Remove existing filter with the same name before adding the new one (for updates)
+    filters_data = [f for f in filters_data if f.get("name") != new_filter.name]
+
+    filters_data.append(new_filter.model_dump(by_alias=True))
+
+    with open(FILTERS_FILE, "w", encoding="utf-8") as f:
+        json.dump(filters_data, f, indent=4, ensure_ascii=False)
+    
+    logging.info(f"Filtro '{new_filter.name}' salvo com sucesso.")
+    return {"status": "sucesso", "message": f"Filtro '{new_filter.name}' salvo."}
+
+@app.get("/api/filters", tags=["Universal Filters"], summary="Lista todos os filtros universais salvos")
+async def list_filters() -> List[Filter]:
+    """
+    Retorna uma lista de todos os filtros universais salvos.
+    """
+    try:
+        if not os.path.exists(FILTERS_FILE):
+            return []
+        
+        with open(FILTERS_FILE, "r", encoding="utf-8") as f:
+            filters_data = json.load(f)
+        
+        # Deserialize filters into Pydantic models
+        filters = [Filter.model_validate(f) for f in filters_data]
+        
+        logging.info("Filtros listados com sucesso.")
+        return filters
+    except Exception as e:
+        logging.exception("Erro ao listar filtros.")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro interno ao listar filtros. Verifique o LogFalha.txt."
+        )
+
+@app.delete("/api/filters/{filter_name}", tags=["Universal Filters"], summary="Deleta um filtro universal")
+async def delete_filter(filter_name: str):
+    """
+    Deleta um filtro universal pelo nome.
+    """
+    filters_data = []
+    if os.path.exists(FILTERS_FILE):
+        try:
+            with open(FILTERS_FILE, "r", encoding="utf-8") as f:
+                filters_data = json.load(f)
+        except json.JSONDecodeError:
+            logging.warning("filters.json está vazio ou corrompido. Nenhum filtro para deletar.")
+            filters_data = []
+    
+    initial_count = len(filters_data)
+    filters_data = [f for f in filters_data if f.get("name") != filter_name]
+
+    if len(filters_data) == initial_count:
+        raise HTTPException(status_code=404, detail=f"Filtro com o nome '{filter_name}' não encontrado.")
+
+    with open(FILTERS_FILE, "w", encoding="utf-8") as f:
+        json.dump(filters_data, f, indent=4, ensure_ascii=False)
+    
+    logging.info(f"Filtro '{filter_name}' deletado com sucesso.")
+    return {"status": "sucesso", "message": f"Filtro '{filter_name}' deletado."}
 
 # --- ENDPOINTS PARA RELAÇÕES DE DADOS ---
 
@@ -254,11 +329,10 @@ async def list_relationships():
         )
 
 @app.get("/api/data/joined/{relationship_name}", tags=["Data Sources"], summary="Obtém dados combinados de uma relação")
-async def get_joined_data(relationship_name: str, filters: Optional[str] = Query(None)): # Adicionado parâmetro filters
+async def get_joined_data(relationship_name: str):
     """
     Realiza um INNER JOIN entre duas fontes de dados com base em uma relação definida
     e retorna os dados combinados como um array de objetos JSON.
-    Aplica filtros opcionais se fornecidos.
     """
     try:
         if not os.path.exists(RELATIONSHIPS_FILE):
@@ -291,40 +365,10 @@ async def get_joined_data(relationship_name: str, filters: Optional[str] = Query
         # Suffixes are added to differentiate columns with the same name from different sources
         joined_df = pd.merge(df1, df2, left_on=column1, right_on=column2, how='inner', suffixes=(f'_{source1_name}', f'_{source2_name}'))
         
-        # Aplicar filtros se existirem
-        if filters:
-            try:
-                filter_list = json.loads(filters)
-                for f in filter_list:
-                    column = f.get("column")
-                    value = f.get("value")
-                    filter_type = f.get("type")
-
-                    if column and value is not None and filter_type:
-                        if column not in joined_df.columns:
-                            logging.warning(f"Coluna '{column}' para filtro não encontrada no DataFrame combinado.")
-                            continue # Pula este filtro se a coluna não existir
-
-                        if filter_type == "equals":
-                            joined_df = joined_df[joined_df[column] == value]
-                        elif filter_type == "contains":
-                            joined_df = joined_df[joined_df[column].astype(str).str.contains(str(value), case=False, na=False)]
-                        elif filter_type == "greater_than":
-                            joined_df = joined_df[pd.to_numeric(joined_df[column], errors='coerce') > pd.to_numeric(value, errors='coerce')]
-                        elif filter_type == "less_than":
-                            joined_df = joined_df[pd.to_numeric(joined_df[column], errors='coerce') < pd.to_numeric(value, errors='coerce')]
-                        # Adicionar outros tipos de filtro conforme necessário
-            except json.JSONDecodeError:
-                logging.error(f"Filtros fornecidos não são um JSON válido: {filters}")
-                raise HTTPException(status_code=400, detail="Filtros fornecidos não são um JSON válido.")
-            except Exception as filter_e:
-                logging.exception(f"Erro ao aplicar filtros: {filter_e}")
-                raise HTTPException(status_code=500, detail=f"Erro ao aplicar filtros: {filter_e}")
-
         # Replace NaN with None for JSON compatibility
         joined_df = joined_df.replace(np.nan, None)
 
-        logging.info(f"Sucesso! Dados combinados para a relação '{relationship_name}'. {len(joined_df)} registros após filtros.")
+        logging.info(f"Sucesso! Dados combinados para a relação '{relationship_name}'. {len(joined_df)} registros.")
         return JSONResponse(content=joined_df.to_dict(orient="records"))
 
     except HTTPException as he:
@@ -340,64 +384,33 @@ async def get_joined_data(relationship_name: str, filters: Optional[str] = Query
 
 FILTERS_FILE = os.path.join(SAVES_DIR, "filters.json")
 
-@app.post("/api/filters", tags=["Universal Filters"], summary="Salva um novo filtro universal")
-async def save_filter(request: Request):
+@app.get("/api/data/{file_name}", tags=["Data Sources"], summary="Obtém dados de um arquivo Excel")
+async def get_data_from_excel(file_name: str):
     """
-    Salva uma nova definição de filtro universal.
-    O filtro é um objeto JSON com 'name', 'type', 'column', 'sourceType', 'sourceName'.
+    Lê um arquivo .xlsx da pasta 'data' e o retorna como um array de objetos JSON.
     """
-    try:
-        new_filter = await request.json()
-        # Basic validation
-        required_fields = ["name", "type", "column", "sourceType", "sourceName"]
-        if not all(field in new_filter for field in required_fields):
-            raise HTTPException(status_code=400, detail="Campos obrigatórios ausentes na definição do filtro.")
+    file_path = os.path.join(DATA_DIR, f"{file_name}.xlsx")
+    logging.debug(f"Tentando acessar o arquivo: {file_path}")
 
-        filters = []
-        if os.path.exists(FILTERS_FILE):
-            with open(FILTERS_FILE, "r", encoding="utf-8") as f:
-                filters = json.load(f)
-        
-        # Check for duplicate name
-        if any(f.get("name") == new_filter["name"] for f in filters):
-            raise HTTPException(status_code=409, detail=f"Filtro com o nome '{new_filter['name']}' já existe.")
-
-        filters.append(new_filter)
-
-        with open(FILTERS_FILE, "w", encoding="utf-8") as f:
-            json.dump(filters, f, indent=4, ensure_ascii=False)
-        
-        logging.info(f"Filtro '{new_filter['name']}' salvo com sucesso.")
-        return {"status": "sucesso", "message": f"Filtro '{new_filter['name']}' salvo."}
-    except json.JSONDecodeError:
-        logging.error("Corpo da requisição para salvar filtro não é um JSON válido.")
-        raise HTTPException(status_code=400, detail="Requisição inválida. Esperado um JSON válido.")
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        logging.exception("Erro ao salvar filtro.")
+    if not os.path.exists(file_path):
+        logging.error(f"Arquivo não encontrado: {file_path}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Erro interno ao salvar filtro. Verifique o LogFalha.txt."
+            status_code=404,
+            detail=f"Fonte de dados '{file_name}.xlsx' não encontrada. Verifique o LogFalha.txt."
         )
 
-@app.get("/api/filters", tags=["Universal Filters"], summary="Lista todos os filtros universais salvos")
-async def list_filters():
-    """
-    Retorna uma lista de todos os filtros universais salvos.
-    """
+    logging.debug(f"Arquivo encontrado. Tentando ler com pandas...")
     try:
-        if not os.path.exists(FILTERS_FILE):
-            return JSONResponse(content=[])
+        df = pd.read_excel(file_path)
         
-        with open(FILTERS_FILE, "r", encoding="utf-8") as f:
-            filters = json.load(f)
-        
-        logging.info("Filtros listados com sucesso.")
-        return JSONResponse(content=filters)
+        # Substitui NaN por None para compatibilidade com JSON
+        df = df.replace(np.nan, None)
+        logging.info(f"Sucesso! Arquivo '{file_path}' lido e processado pelo pandas. {len(df)} registros.")
+        data = df.to_dict(orient="records")
+        return JSONResponse(content=data)
     except Exception as e:
-        logging.exception("Erro ao listar filtros.")
+        logging.exception(f"Ocorreu um erro ao tentar ler ou filtrar o arquivo '{file_path}' com pandas.")
         raise HTTPException(
             status_code=500,
-            detail=f"Erro interno ao listar filtros. Verifique o LogFalha.txt."
+            detail=f"Erro ao ler, processar ou filtrar o arquivo '{file_name}.xlsx'. Verifique o LogFalha.txt para mais detalhes."
         )

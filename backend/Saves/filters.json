@@ -1,0 +1,13 @@
+[
+    {
+        "name": "Teste",
+        "sourceType": "dataSource",
+        "sourceName": "vendas",
+        "column": "VENDEDOR",
+        "type": "selection",
+        "config": {
+            "type": "selection",
+            "selected_options": []
+        }
+    }
+]
